@@ -75,11 +75,18 @@ var myChart = echarts.init(document.getElementById('main'));
         }],
         series: [{
             type: 'graph', // 类型:关系图
-            layout: 'circular', //图的布局，类型为力导图
-            symbolSize: 80, // 调整节点的大小
+            layout: 'force', //图的布局，类型为力导图
             roam: true, // 是否开启鼠标缩放和平移漫游。默认不开启。如果只想要开启缩放或者平移,可以设置成 'scale' 或者 'move'。设置成 true 为都开启
-            edgeSymbol: ['circle', 'arrow'],
-            edgeSymbolSize: [2, 10],
+            {#edgeSymbol: ['circle', 'arrow'],#}
+            {#edgeSymbolSize: [2, 10],#}
+            symbolSize: function (value, params) {//改变节点大小
+                            if (value === 1)
+                                return 20;
+                            else if(value === 2)
+                                return 50;
+                            else
+                                return 20;
+                        },
             edgeLabel: {
                 normal: {
                     textStyle: {
@@ -100,7 +107,7 @@ var myChart = echarts.init(document.getElementById('main'));
             },
             edgeLabel: {
                 normal: {
-                    show: true,
+                    show: false,
                     formatter: function (x) {
                         return x.data.name;
                     }

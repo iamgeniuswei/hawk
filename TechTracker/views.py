@@ -84,11 +84,13 @@ def html_author_co(request):
     try:
         articles = TArticle.objects.all()
         co = CoOccuranceAnalyzer()
-        au_dict, au_group = co.author_cooccurance(articles)
+        au_dict, au_group, test = co.author_cooccurance(articles)
         nodes = []
         links = []
-        for au in au_dict.keys():
-            tmp = {'name': au}
+        for au,value in au_dict.items():
+            tmp = {'name': au,
+                   'value': value}
+
             nodes.append(tmp)
         for au_co in au_group.keys():
             co = au_co.split(',')
@@ -97,5 +99,28 @@ def html_author_co(request):
             links.append(tmp)
 
         return render(request, 'TechTracker/coauthor.html', locals())
+    except Exception as e:
+        print(str(e))
+
+import networkx as nx
+def bet(au_group):
+    g = nx.Graph()
+    for key, value in au_group.items():
+        src_dst = key.split(',')
+        g.add_edge(src_dst[0], src_dst[1])
+    score = nx.betweenness_centrality(g)
+    score = sorted(score.items(), key=lambda item: item[1], reverse=True)
+    print(score)
+
+
+
+
+def html_author_info(request):
+    try:
+        articles = TArticle.objects.all()
+        co = CoOccuranceAnalyzer()
+        au_dict, au_group, first_dict = co.author_cooccurance(articles)
+        bet(au_group)
+        return render(request, 'TechTracker/table.html', locals())
     except Exception as e:
         print(str(e))

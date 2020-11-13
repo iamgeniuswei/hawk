@@ -7,6 +7,8 @@
 # @Desc    :
 
 from django.urls import path
+
+
 from . import views
 
 urlpatterns = [
@@ -17,4 +19,5 @@ urlpatterns = [
     path('topn', views.get_top_n, name='topn'),
     path('co', views.html_author_keywords, name='co'),
     path('coauthor',views.html_author_co, name='coauthor'),
+    path('table', views.html_author_info, name='table'),
 ]
