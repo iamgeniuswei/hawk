@@ -34,6 +34,9 @@
 <script>
 var myChart = echarts.init(document.getElementById('main'));
     var categories = [{name:'作者'}, {name:'关键词'}]
+    var nodes = {{ nodes|safe }};
+    var links = {{ links|safe }}
+
 
     option = {
         // 图的标题
@@ -111,8 +114,8 @@ var myChart = echarts.init(document.getElementById('main'));
             },
 
             // 数据
-            data: {{ nodes|safe }},
-            links: {{ links|safe }},
+            data: nodes,
+            links: links,
             categories: categories,
         }]
     };

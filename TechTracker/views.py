@@ -79,3 +79,23 @@ def html_author_keywords(request):
         return render(request, 'TechTracker/cooccurance.html', locals())
     except Exception as e:
         print(str(e))
+
+def html_author_co(request):
+    try:
+        articles = TArticle.objects.all()
+        co = CoOccuranceAnalyzer()
+        au_dict, au_group = co.author_cooccurance(articles)
+        nodes = []
+        links = []
+        for au in au_dict.keys():
+            tmp = {'name': au}
+            nodes.append(tmp)
+        for au_co in au_group.keys():
+            co = au_co.split(',')
+            tmp = {'source': co[0],
+                   'target': co[1],}
+            links.append(tmp)
+
+        return render(request, 'TechTracker/coauthor.html', locals())
+    except Exception as e:
+        print(str(e))

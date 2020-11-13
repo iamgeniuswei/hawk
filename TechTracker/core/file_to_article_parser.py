@@ -9,6 +9,7 @@
 import pandas as pd
 from .utils import Utility
 from ..models import *
+import networkx as nx
 
 class FileParser(object):
     def __init__(self, format, path):
@@ -123,4 +124,38 @@ class CNKIParser(FileParser):
             new_institute = TInstitute.objects.get_or_create(f_name=institute)[0]
             objects_institutes.append(new_institute)
         return objects_institutes
+
+
+class CoOccuranceAnalyzer(object):
+    def __init__(self):
+        pass
+
+    def analyze_cooccurance(self):
+        pass
+
+    def author_cooccurance(self, articles):
+        graph = nx.Graph()
+        au_dict = {}
+        au_group = {}  # 两两作者合作
+        for article in articles:
+            authors = article.f_other_authors.all()
+            authors_str_list = []
+            for author in authors:
+                author_str = str(author.id)+'-'+author.f_name
+                authors_str_list.append(author_str)
+            for author in authors_str_list:
+                if author not in au_dict:
+                    au_dict[author] = 1
+                else:
+                    au_dict[author] += 1
+                for author_co in authors[1:]:
+                    A, B = author, author_co  # 不能用本来的名字，否则会改变au自身
+                    if A > B:
+                        A, B = B, A  # 保持两个作者名字顺序一致
+                    co_au = A + ',' + B  # 将两个作者合并起来，依然以逗号隔开
+                    if co_au not in au_group:
+                        au_group[co_au] = 1
+                    else:
+                        au_group[co_au] += 1
+        return au_dict, au_group
 

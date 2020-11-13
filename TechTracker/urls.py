@@ -15,5 +15,6 @@ urlpatterns = [
     path('project', views.project, name='project'),
     path('analyze', views.analyze, name='analyze'),
     path('topn', views.get_top_n, name='topn'),
-    path('co', views.html_author_keywords, name='co')
+    path('co', views.html_author_keywords, name='co'),
+    path('coauthor',views.html_author_co, name='coauthor'),
 ]
