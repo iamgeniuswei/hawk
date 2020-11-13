@@ -1,0 +1,6 @@
+/venv/
+/static/
+/TechTracker/migrations/
+/TechTracker/__pycache__/
+/.idea/
+/hawk/__pycache__/
