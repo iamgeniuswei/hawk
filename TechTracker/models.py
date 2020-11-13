@@ -15,6 +15,9 @@ class TPublication(models.Model):
     f_name = models.CharField(max_length=128, verbose_name='出版物名称')
 
 
+class TTechDomain(models.Model):
+    f_name = models.CharField(max_length=128, verbose_name='技术领域')
+
 class TArticle(models.Model):
     f_name = models.CharField(max_length=128, verbose_name='文献名称')
     f_first_author = models.ForeignKey(to=TAuthor, related_name='article_fist_author', on_delete=models.DO_NOTHING)
@@ -22,9 +25,10 @@ class TArticle(models.Model):
     f_other_authors = models.ManyToManyField('tauthor', related_name='article_other_authors')
     f_keywords = models.ManyToManyField('tkeyword', related_name='article_keywords')
     f_institutes = models.ManyToManyField('tinstitute', related_name='article_institutes')
-    f_publish_time = models.PositiveIntegerField(verbose_name='发表时间')
+    f_publish_time = models.PositiveIntegerField(verbose_name='发表时间', null=False, blank=False, default=2020)
     f_publication = models.ForeignKey(to=TPublication, on_delete=models.DO_NOTHING, verbose_name='出版物')
     f_abstract = models.TextField(verbose_name='摘要')
+    f_domain = models.ManyToManyField(to=TTechDomain, related_name='article_domain')
 
 
 class TKeyword(models.Model):
