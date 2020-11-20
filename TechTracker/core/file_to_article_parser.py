@@ -140,6 +140,35 @@ class CoOccuranceAnalyzer(object):
     def analyze_cooccurance(self):
         pass
 
+    def keyword_cooccurance(self, articles):
+        co = {}
+        key_dict = {}
+        for article in articles:
+            keywords = article.f_keywords.all()
+            keywords_co = keywords
+            for keyword in keywords:
+                str_keyword = keyword.f_name
+                if str_keyword not in key_dict:
+                    key_dict[str_keyword] = 1
+                else:
+                    key_dict[str_keyword] += 1
+                keywords_co = keywords_co[1:]
+                for other in keywords_co:
+                    str_other = other.f_name
+                    A, B = str_keyword, str_other
+                    if A > B:
+                        A, B = B, A
+                    co_key = A + ',' + B
+                    if co_key not in co:
+                        co[co_key] = 1
+                    else:
+                        co[co_key] += 1
+        return key_dict, co
+
+
+
+
+
     def author_cooccurance(self, articles):
         graph = nx.Graph()
         au_dict = {}

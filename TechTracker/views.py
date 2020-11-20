@@ -1,3 +1,5 @@
+import json
+
 from django.shortcuts import render
 from django.http import HttpResponse
 # Create your views here.
@@ -32,8 +34,8 @@ def get_top_n(request):
     try:
         authors = []
         amounts = []
-        # qs_author = TAuthor.objects.annotate(tarticle__count=Count('article_fist_author')).order_by('-tarticle__count')[:100]
-        qs_author = TInstitute.objects.annotate(tarticle__count=Count('article_institutes')).order_by('-tarticle__count')[:100]
+        qs_author = TAuthor.objects.annotate(tarticle__count=Count('article_fist_author')).order_by('-tarticle__count')[:100]
+        # qs_author = TInstitute.objects.annotate(tarticle__count=Count('article_institutes')).order_by('-tarticle__count')[:100]
         for item in qs_author:
             authors.append(item.f_name)
             amounts.append(item.tarticle__count)
@@ -114,12 +116,45 @@ def bet(au_group):
 
 
 
+def html_keyword_co(request):
+    try:
+        articles = TArticle.objects.all()
+        co = CoOccuranceAnalyzer()
+        key_dict, key_co = co.keyword_cooccurance(articles)
+        nodes = []
+        links = []
+        for au, value in key_dict.items():
+            if value < 3:
+                continue
+            if value > 5:
+                category = 1
+            else:
+                category = 0
+            tmp = {'name': au,
+                   'value': value,
+                   'category': category}
+
+            nodes.append(tmp)
+        for au_co, value in key_co.items():
+            co = au_co.split(',')
+            if key_dict[co[1]] < 3 or key_dict[co[0]] < 3:
+                continue
+            tmp = {'source': co[0],
+                   'target': co[1],
+                   'value': value}
+            links.append(tmp)
+
+        return render(request, 'TechTracker/cokeyword.html', locals())
+    except Exception as e:
+        print(str(e))
+
 
 def html_author_info(request):
     try:
         articles = TArticle.objects.all()
         co = CoOccuranceAnalyzer()
         au_dict, au_group, first_dict = co.author_cooccurance(articles)
+        data = [{'name': 'afaf', 'value': 1}, {'name': 'afafasfasf', 'value': 2}]
         bet(au_group)
         return render(request, 'TechTracker/table.html', locals())
     except Exception as e:

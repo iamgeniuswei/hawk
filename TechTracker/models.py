@@ -31,6 +31,8 @@ class TArticle(models.Model):
     f_domain = models.ManyToManyField(to=TTechDomain, related_name='article_domain')
 
 
+
+
 class TKeyword(models.Model):
     f_name = models.CharField(max_length=128, verbose_name='关键词')
     f_freq = models.PositiveIntegerField(default=0, verbose_name='频次')

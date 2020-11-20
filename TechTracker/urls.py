@@ -19,5 +19,6 @@ urlpatterns = [
     path('topn', views.get_top_n, name='topn'),
     path('co', views.html_author_keywords, name='co'),
     path('coauthor',views.html_author_co, name='coauthor'),
+    path('cokeyword', views.html_keyword_co, name='cokeyword'),
     path('table', views.html_author_info, name='table'),
 ]
