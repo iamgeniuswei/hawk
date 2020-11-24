@@ -1,0 +1,52 @@
+{% extends 'TechTracker/index.html' %}
+{% load static %}
+
+{% block content-body %}
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        TOP分析参数设置
+                    </div>
+                </div>
+                <div class="card-content">
+                    <div class="card-body">
+                    <form class="">
+                        {% for field in form_topn_params %}
+                            {% ifnotequal field.name 'f_object' %}
+                                <fieldset class="form-group">
+                                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {{ field }}
+                                </fieldset>
+                            {% endifnotequal %}
+                        {% endfor %}
+                        <div class="form-group">
+                            <label>分析对象</label>
+                            <ul class="list-unstyled mb-0">
+                            {% for choice in form_topn_params.f_object %}
+                                <li class="d-inline-block mr-2 mb-1">
+                                    <fieldset>
+                                        <div class="radio">
+                                            {{ choice.tag }}
+                                            <label for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
+                                        </div>
+                                    </fieldset>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        </div>
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary">开始分析</button>
+                            <button type="button" class="btn btn-light-primary">重置</button>
+                        </div>
+
+                    </form>
+                </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

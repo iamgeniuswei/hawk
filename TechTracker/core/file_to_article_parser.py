@@ -65,17 +65,23 @@ class CNKIParser(FileParser):
                 objects_keywords = self.parse_keywords(list_keywords)
                 object_publication = self.parse_publication(str_publication)
 
-                new_article = TArticle.objects.get_or_create(f_name=str_title,
-                                                             f_abstract=str_abstract,
-                                                             f_first_author=objects_authors[0],
-                                                             f_publish_time=self.parse_publication_time(str_pulish_time),
-                                                             f_publication=object_publication)[0]
-                for author in objects_authors:
-                    new_article.f_other_authors.add(author)
-                for institute in objects_institutes:
-                    new_article.f_institutes.add(institute)
-                for keyword in objects_keywords:
-                    new_article.f_keywords.add(keyword)
+                try:
+                    new_article = TArticle.objects.get_or_create(f_name=str_title,
+                                                                 f_abstract=str_abstract,
+                                                                 f_authors_str= ','.join(list_authors),
+                                                                 f_institutes_str= ','.join(list_institute),
+                                                                 f_keywords_str= ','.join(list_keywords),
+                                                                 f_year=self.parse_publication_time(str_pulish_time),
+                                                                 f_publication=object_publication,
+                                                                 f_source_id=1)[0]
+                    for author in objects_authors:
+                        new_article.f_other_authors.add(author)
+                    for institute in objects_institutes:
+                        new_article.f_institutes.add(institute)
+                    for keyword in objects_keywords:
+                        new_article.f_keywords.add(keyword)
+                except Exception as e:
+                    print(str(e))
 
         except Exception as e:
             print(str(e))
@@ -133,71 +139,5 @@ class CNKIParser(FileParser):
 
 
 
-class CoOccuranceAnalyzer(object):
-    def __init__(self):
-        pass
 
-    def analyze_cooccurance(self):
-        pass
-
-    def keyword_cooccurance(self, articles):
-        co = {}
-        key_dict = {}
-        for article in articles:
-            keywords = article.f_keywords.all()
-            keywords_co = keywords
-            for keyword in keywords:
-                str_keyword = keyword.f_name
-                if str_keyword not in key_dict:
-                    key_dict[str_keyword] = 1
-                else:
-                    key_dict[str_keyword] += 1
-                keywords_co = keywords_co[1:]
-                for other in keywords_co:
-                    str_other = other.f_name
-                    A, B = str_keyword, str_other
-                    if A > B:
-                        A, B = B, A
-                    co_key = A + ',' + B
-                    if co_key not in co:
-                        co[co_key] = 1
-                    else:
-                        co[co_key] += 1
-        return key_dict, co
-
-
-
-
-
-    def author_cooccurance(self, articles):
-        graph = nx.Graph()
-        au_dict = {}
-        first_dict = {}
-        au_group = {}  # 两两作者合作
-        for article in articles:
-            first = article.f_first_author.f_name
-            if first not in first_dict:
-                first_dict[first] = 1
-            else:
-                first_dict[first] += 1
-            authors = article.f_other_authors.all()
-            authors_str_list = []
-            for author in authors:
-                author_str = str(author.id)+'-'+author.f_name
-                authors_str_list.append(author_str)
-            for author in authors_str_list:
-                if author not in au_dict:
-                    au_dict[author] = 1
-                else:
-                    au_dict[author] += 1
-                for author_co in authors_str_list[1:2]:
-                    A, B = author, author_co  # 不能用本来的名字，否则会改变au自身
-                    if A > B:
-                        A, B = B, A  # 保持两个作者名字顺序一致
-                    co_au = A + ',' + B  # 将两个作者合并起来，依然以逗号隔开
-                    if co_au not in au_group:
-                        au_group[co_au] = 1
-                    else:
-                        au_group[co_au] += 1
-        return au_dict, au_group, first_dict
 

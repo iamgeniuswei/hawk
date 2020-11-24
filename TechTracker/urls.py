@@ -16,9 +16,10 @@ urlpatterns = [
     path('cnki', views.cnki, name='cnki'),
     path('project', views.project, name='project'),
     path('analyze', views.analyze, name='analyze'),
-    path('topn', views.get_top_n, name='topn'),
+    path('topn', views.html_topn, name='topn'),
     path('co', views.html_author_keywords, name='co'),
     path('coauthor',views.html_author_co, name='coauthor'),
     path('cokeyword', views.html_keyword_co, name='cokeyword'),
     path('table', views.html_author_info, name='table'),
+    path('config_topn', views.html_topn_config, name='ConfigTopN')
 ]

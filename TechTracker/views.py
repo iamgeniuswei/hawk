@@ -27,6 +27,7 @@ def analyze(request):
         file = "F:/Project/hawk/data"
         parser = CNKIParser('CNKI', file)
         parser.parse_files_to_articles()
+        print('All is Done')
     except Exception as e:
         print(str(e))
 
@@ -41,7 +42,7 @@ def get_top_n(request):
             amounts.append(item.tarticle__count)
 
 
-        return render(request, 'TechTracker/topn.html', locals())
+        return render(request, 'TechTracker/page_topn.html', locals())
     except Exception as e:
         print(str(e))
 
@@ -157,5 +158,20 @@ def html_author_info(request):
         data = [{'name': 'afaf', 'value': 1}, {'name': 'afafasfasf', 'value': 2}]
         bet(au_group)
         return render(request, 'TechTracker/table.html', locals())
+    except Exception as e:
+        print(str(e))
+
+
+def html_topn_config(request):
+    try:
+        form_topn_params = FTopAnalysisParams()
+        return render(request, 'TechTracker/html_topn_config.html', locals())
+    except Exception as e:
+        print(str(e))
+
+
+def html_topn(request):
+    try:
+        form_topn_params = FTopAnalysisParams(request.POST)
     except Exception as e:
         print(str(e))
