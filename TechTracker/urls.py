@@ -8,7 +8,6 @@
 
 from django.urls import path
 
-
 from . import views
 
 urlpatterns = [
@@ -17,9 +16,10 @@ urlpatterns = [
     path('project', views.project, name='project'),
     path('analyze', views.analyze, name='analyze'),
     path('topn', views.html_topn, name='topn'),
-    path('co', views.html_author_keywords, name='co'),
-    path('coauthor',views.html_author_co, name='coauthor'),
+    path('co', views.html_co, name='co'),
+    path('coauthor', views.html_author_co, name='coauthor'),
     path('cokeyword', views.html_keyword_co, name='cokeyword'),
     path('table', views.html_author_info, name='table'),
-    path('config_topn', views.html_topn_config, name='ConfigTopN')
+    path('config_topn', views.html_topn_config, name='ConfigTopN'),
+    path('config_co', views.html_co_config, name='ConfigCo')
 ]

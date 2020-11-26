@@ -1,70 +1,131 @@
 {% extends 'TechTracker/index.html' %}
 {% load static %}
 {% block content-body %}
-<div class="row">
-<div class="col-lg-12">
-    <div class="card">
-        <div class="card-header">
-            第一作者发文数
-        </div>
-        <div class="card-content">
-            <div class="card-body">
-                <div id="id_chart_first" style="width: 100%;height:400px;"></div>
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    第一作者发文数
+                </div>
+                <div class="card-content">
+                    <div class="card-body">
+                        <div id="id_chart_first" style="width: 100%;height:400px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    总发文数
+                </div>
+                <div class="card-content">
+                    <div class="card-body">
+                        <div id="id_chart_all" style="width: 100%;height:400px;"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="card">
-        <div class="card-header">
-            总发文数
-        </div>
-        <div class="card-content">
-            <div class="card-body">
-                <div id="id_chart_all" style="width: 100%;height:400px;"></div>
-            </div>
-        </div>
-    </div>
-</div>
-</div>
 {% endblock %}
 {% block scripts %}
-<script src="{% static 'jquery/jquery-3.5.1.js' %}"></script>
-<script src="{% static 'echarts/echarts.js' %}" type="text/javascript" charset="utf-8"></script>
-<script src="{% static 'echarts/extension/dataTool.js' %}" type="text/javascript" charset="utf-8"></script>
-<script>
-    var myChart = echarts.init(document.getElementById('id_chart_first'));
-    option = {
-        xAxis: {
-            type: 'category',
-            axisLabel: {
-                // interval: 0,
-                rotate: 40,
+    <script src="{% static 'jquery/jquery-3.5.1.js' %}"></script>
+    <script src="{% static 'echarts/echarts.js' %}" type="text/javascript" charset="utf-8"></script>
+    <script src="{% static 'echarts/extension/dataTool.js' %}" type="text/javascript" charset="utf-8"></script>
+    <script>
+        var chart_first = echarts.init(document.getElementById('id_chart_first'));
+        var chart_all = echarts.init(document.getElementById('id_chart_all'));
+        var show_tag = {{ show_tag | safe }};
+        var fisrt_names = [];
+        var first_amounts = [];
+        var all_names = [];
+        var all_amounts = []
+        if (show_tag['show_first'] === 1) {
+            {% if first_names %}
+            first_names = {{ first_names | safe }};
+            first_amounts = {{ first_amounts | safe }}
+            {% endif %}
+            option = {
+                tooltip: {},
+                xAxis: {
+                    type: 'category',
+                    axisLabel: {
+                        // interval: 0,
+                        rotate: 40,
 
-            },
-            data: {{ authors | safe }}
-        },
-        yAxis: {
-            type: 'value',
-            minInterval: 1,
-            boundaryGap: [0, "0.2"],
+                    },
+                    data: all_names,
+                },
+                yAxis: {
+                    type: 'value',
+                    minInterval: 1,
+                    boundaryGap: [0, "0.2"],
 
-        },
-        grid: {
-                left: '10%',
-                bottom: '35%'
-            },
-        series: [{
-            data: {{ amounts }},
-            type: 'bar',
-            showBackground: true,
-            backgroundStyle: {
-                color: 'rgba(220, 220, 220, 0.8)'
-            }
-        }]
-    };
+                },
+                grid: {
+                    left: '10%',
+                    bottom: '35%'
+                },
+                series: [{
+                    data: first_amounts,
+                    type: 'bar',
+                    showBackground: true,
+                    backgroundStyle: {
+                        color: 'rgba(220, 220, 220, 0.8)'
+                    },
+                    itemStyle: {
+                        highlight: {
+                            color: 'green'
+                        },
+                    }
+                }]
+            };
+            chart_first.setOption(option);
+        }
+        else {
+            $("#id_chart_first").css('display', 'none');
+        }
+        if(show_tag['show_all'] === 1)
+        {
+            option = {
+                tooltip: {},
+                xAxis: {
+                    type: 'category',
+                    axisLabel: {
+                        // interval: 0,
+                        rotate: 40,
 
-    myChart.setOption(option);
+                    },
+                    data: {{ all_names | safe }}
+                },
+                yAxis: {
+                    type: 'value',
+                    minInterval: 1,
+                    boundaryGap: [0, "0.2"],
 
-</script>
+                },
+                grid: {
+                    left: '10%',
+                    bottom: '35%'
+                },
+                series: [{
+                    data: {{ all_amounts }},
+                    type: 'bar',
+                    showBackground: true,
+                    backgroundStyle: {
+                        color: 'rgba(220, 220, 220, 0.8)'
+                    },
+                    itemStyle: {
+                        color: '#5A8DEE',
+                    }
+                }]
+            };
+            chart_all.setOption(option);
+        }
+        else {
+             $("#id_chart_all").css('display', 'none');
+        }
+
+
+    </script>
 {% endblock %}
 
 

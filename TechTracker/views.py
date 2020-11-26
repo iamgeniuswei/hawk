@@ -1,12 +1,14 @@
 import json
 
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseServerError
 # Create your views here.
 from .forms import *
 from .core.file_to_article_parser import *
 from django.db.models import Count
 import pandas as pd
+from .core.analyzer import *
+import math
 def index(request):
     return render(request, 'TechTracker/index.html')
 
@@ -145,7 +147,7 @@ def html_keyword_co(request):
                    'value': value}
             links.append(tmp)
 
-        return render(request, 'TechTracker/cokeyword.html', locals())
+        return render(request, 'TechTracker/html_co.html', locals())
     except Exception as e:
         print(str(e))
 
@@ -173,5 +175,65 @@ def html_topn_config(request):
 def html_topn(request):
     try:
         form_topn_params = FTopAnalysisParams(request.POST)
+        if form_topn_params.is_valid():
+            if form_topn_params.cleaned_data['f_object'] == 1:
+                first_names, first_amounts, all_names, all_amounts = analyze_topn(form_topn_params.cleaned_data)
+                show_tag = {'show_all': 1, 'show_first': 1, 'show_g': 0}
+                return render(request, 'TechTracker/page_topn.html', locals())
+            elif form_topn_params.cleaned_data['f_object'] == 2:
+                all_names, all_amounts = analyze_topn(form_topn_params.cleaned_data)
+                show_tag = {'show_all': 1, 'show_first': 0, 'show_g': 0}
+                return render(request, 'TechTracker/page_topn.html', locals())
+            elif form_topn_params.cleaned_data['f_object'] == 3:
+                all_names, all_amounts = analyze_topn(form_topn_params.cleaned_data)
+                show_tag = {'show_all': 1, 'show_first': 0, 'show_g': 0}
+                return render(request, 'TechTracker/page_topn.html', locals())
+        else:
+            return HttpResponseServerError()
+    except Exception as e:
+        print(str(e))
+
+
+def html_co_config(request):
+    try:
+        form_co_params = FCoAnalysisParams()
+        return render(request, 'TechTracker/html_co_config.html', locals())
+    except Exception as e:
+        print(str(e))
+
+
+def html_co(request):
+    try:
+        form_co_params = FCoAnalysisParams(request.POST)
+        if form_co_params.is_valid():
+            co = CoAnalyzer()
+            nodes_dict, links_dict = co.co_analysis(form_co_params.cleaned_data)
+            nodes = []
+            links = []
+            categories = []
+            index = 0
+            category = 0
+            length = len(nodes_dict.items())
+            nodes_sorted = sorted(nodes_dict.items(), key=lambda x:x[1], reverse=True)
+            for item in nodes_sorted:
+                category = math.ceil(index/length*10)
+                tmp = {'name': item[0],
+                       'value': item[1],
+                       'category': category}
+                nodes.append(tmp)
+                index += 1
+            for key, value in links_dict.items():
+                co = key.split(',')
+                tmp = {'source': co[0],
+                       'target': co[1],
+                       'value': value}
+                links.append(tmp)
+            for i in range(category):
+                if i == 0:
+                    categories.append({'name': 'MAX'})
+                else:
+                    categories.append({'name': "TOP %" + str(i/category)})
+
+            return render(request, 'TechTracker/html_co.html', locals())
     except Exception as e:
         print(str(e))

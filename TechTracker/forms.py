@@ -25,4 +25,15 @@ class FTopAnalysisParams(forms.ModelForm):
 
     class Meta:
         model = TTopAnalysisParams
-        fields = ['f_purpose', 'f_start', 'f_end', 'f_domain', 'f_top']
+        fields = ['f_purpose', 'f_start', 'f_end', 'f_domain', 'f_source' , 'f_top']
+
+
+class FCoAnalysisParams(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)  # 初始化父类方法
+        for field in self.fields.values():
+            field.widget.attrs = {'class': 'form-control'}
+
+    class Meta:
+        model = TCoAnalysisParams
+        fields = '__all__'

@@ -11,6 +11,9 @@ class TDataSource(models.Model):
     f_name = models.CharField(max_length=128, null=False, blank=False, unique=True, verbose_name='数据源')
     f_memo = models.TextField(null=True, blank=True, verbose_name='备注')
 
+    def __str__(self):
+        return self.f_name
+
 
 
 class TAuthor(models.Model):
@@ -63,12 +66,33 @@ ANALYSIS_OBJECT = (
     (3, '研究热点')
 )
 
+ANALYSIS_THRESHOLD_TYPE = (
+    (1, 'TOPN'),
+    (2, 'TOP%N'),
+    (3, 'h-index'),
+    (4, 'g-index')
+)
+
 
 
 class TTopAnalysisParams(models.Model):
     f_purpose = models.CharField(max_length=128, null=True, blank=True, verbose_name='分析目的')
-    f_start = models.PositiveIntegerField(default=2000, verbose_name='起始年度')
-    f_end = models.PositiveIntegerField(default=2020, verbose_name='终止年度')
-    f_top = models.PositiveIntegerField(default=30, verbose_name='TOP数')
-    f_domain = models.ManyToManyField(to=TTechDomain, related_name='top_domain', verbose_name='技术领域')
+    f_start = models.PositiveIntegerField(default=2000, null=True, blank=True, verbose_name='起始年度')
+    f_end = models.PositiveIntegerField(default=2020, null=True, blank=True,verbose_name='终止年度')
+    f_top = models.PositiveIntegerField(default=30, null=True, blank=True, verbose_name='TOP数')
+    f_domain = models.ManyToManyField(to=TTechDomain, null=True, blank=True, related_name='top_domain', verbose_name='技术领域')
+    f_source = models.ForeignKey(to=TDataSource, verbose_name='数据源', on_delete=models.DO_NOTHING)
     f_object = models.PositiveIntegerField(choices=ANALYSIS_OBJECT, default=1, verbose_name='分析对象')
+
+
+class TCoAnalysisParams(models.Model):
+    f_purpose = models.CharField(max_length=128, null=True, blank=True, verbose_name='分析目的')
+    f_start = models.PositiveIntegerField(default=2000, null=True, blank=True, verbose_name='起始年度')
+    f_end = models.PositiveIntegerField(default=2020, null=True, blank=True,verbose_name='终止年度')
+    f_domain = models.ManyToManyField(to=TTechDomain, null=True, blank=True, related_name='co_domain',
+                                      verbose_name='技术领域')
+    f_slice = models.PositiveIntegerField(default=1, null=True, blank=True, verbose_name='年份切片')
+    f_source = models.ForeignKey(to=TDataSource, verbose_name='数据源', on_delete=models.DO_NOTHING)
+    f_object = models.PositiveIntegerField(choices=ANALYSIS_OBJECT, default=1, verbose_name='分析对象')
+    f_threshold_type = models.PositiveIntegerField(choices=ANALYSIS_THRESHOLD_TYPE, default=1, verbose_name='阈值类型')
+    f_threshold = models.CharField(max_length=128, null=True, blank=True, verbose_name='阈值')

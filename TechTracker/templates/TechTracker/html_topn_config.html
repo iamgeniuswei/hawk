@@ -12,7 +12,7 @@
                 </div>
                 <div class="card-content">
                     <div class="card-body">
-                    <form class="">
+                    <form action="{% url 'topn' %}" method="post">
                         {% for field in form_topn_params %}
                             {% ifnotequal field.name 'f_object' %}
                                 <fieldset class="form-group">
@@ -40,7 +40,6 @@
                             <button type="submit" class="btn btn-primary">开始分析</button>
                             <button type="button" class="btn btn-light-primary">重置</button>
                         </div>
-
                     </form>
                 </div>
                 </div>
