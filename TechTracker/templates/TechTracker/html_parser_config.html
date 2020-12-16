@@ -1,0 +1,211 @@
+{% extends 'TechTracker/index.html' %}
+{% load static %}
+
+{% block content-body %}
+    <div class="row">
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    文献导入参数设置
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="card-body">
+                    <div class="col-lg-6 m-auto">
+                        <form action="{% url 'ConfigParser' %}" method="post">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <fieldset class="form-group">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">{{ form_params.f_path.label }}:</span>
+                                            </div>
+                                            {{ form_params.f_path }}
+                                        </div>
+                                        <span style="color: orangered">按住shift并右键选择”复制为路径“，将路径粘贴于此输入框</span>
+                                    </fieldset>
+
+                                </div>
+                                <div class="col-lg-12">
+                                    <fieldset class="form-group">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">{{ form_params.f_source.label }}:</span>
+                                            </div>
+                                            {{ form_params.f_source }}
+                                            <div class="input-group-addon">
+                                                <button type="button" class="btn btn-light-primary" onclick="addDataSource()">
+                                                    <i class="bx bx-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+
+                                </div>
+                                <div class="col-lg-12">
+                                    <fieldset class="form-group">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">{{ form_params.f_domain.label }}:</span>
+                                            </div>
+                                            {{ form_params.f_domain }}
+                                            <div class="input-group-addon">
+                                                <button type="button" class="btn btn-light-primary" style="margin-top: 20px" onclick="addDomain()">
+                                                    <i class="bx bx-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <span style="color: orangered">指定该批文献主题技术领域，可不选</span>
+                                    </fieldset>
+                                </div>
+                                <div class="col-lg-12">
+                                    <fieldset class="form-group">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">{{ form_params.f_iscluster.label }}:</span>
+                                            </div>
+                                            {{ form_params.f_iscluster }}
+                                        </div>
+                                        <span style="color: orangered"></span>
+                                    </fieldset>
+                                </div>
+                                <div class="col-lg-12">
+                                    <fieldset class="form-group">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">{{ form_params.f_batchname.label }}:</span>
+                                            </div>
+                                            {{ form_params.f_batchname }}
+                                        </div>
+                                        <span style="color: orangered"></span>
+                                    </fieldset>
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <button type="submit" class="btn btn-primary">开始分析</button>
+                                <button type="button" class="btn btn-light-primary">重置</button>
+                                <button type="button" class="btn btn-light-primary" onclick="addDomain()">增加技术领域
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Vertically Centered modal Modal -->
+    <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-centered modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalCenterTitle">增加技术领域</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <i class="bx bx-x"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="id_form_domain">
+                        {% for field in form_domains %}
+                            <fieldset class="form-group">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">{{ field.label }}:</span>
+                                    </div>
+                                    {{ field }}
+                                </div>
+                            </fieldset>
+                        {% endfor %}
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light-secondary" data-dismiss="modal">
+                        <i class="bx bx-x d-block d-sm-none"></i>
+                        <span class="d-none d-sm-block">Close</span>
+                    </button>
+                    <button type="button" class="btn btn-primary ml-1" onclick="persistDomain()">
+                        <i class="bx bx-check d-block d-sm-none"></i>
+                        <span class="d-none d-sm-block">Accept</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <!-- Vertically Centered modal Modal -->
+    <div class="modal fade" id="id_panel_datasource" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-centered modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalCenterTitle">增加文献类型</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <i class="bx bx-x"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="id_form_domain">
+                        {% for field in form_source %}
+                            <fieldset class="form-group">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">{{ field.label }}:</span>
+                                    </div>
+                                    {{ field }}
+                                </div>
+                            </fieldset>
+                        {% endfor %}
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light-secondary" data-dismiss="modal">
+                        <i class="bx bx-x d-block d-sm-none"></i>
+                        <span class="d-none d-sm-block">Close</span>
+                    </button>
+                    <button type="button" class="btn btn-primary ml-1" onclick="persistDomain()">
+                        <i class="bx bx-check d-block d-sm-none"></i>
+                        <span class="d-none d-sm-block">Accept</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+{% endblock %}
+
+{% block scripts %}
+
+    <script>
+        function addDomain() {
+            $("#exampleModalCenter").modal();
+        }
+
+        function addDataSource(){
+            $("#id_panel_datasource").modal();
+        }
+
+        function persistDomain() {
+            var domain = $("#id_form_domain").serialize();
+            $.ajax({
+                url: '{% url 'PersistDomain' %}',
+                data: domain,
+                type: 'post',
+                success: function (data) {
+                    if (data['flag'] === true) {
+                        var html = "<option value='0'>" + $("#id_f_name").val() + "</option>";
+                        html = html.replace(/0/, data['id']);
+                        $("#id_f_domain").append(html);
+                        $("#id_form_domain")[0].reset();
+                    }
+                }
+            })
+        }
+
+    </script>
+
+{% endblock %}

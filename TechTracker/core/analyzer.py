@@ -7,6 +7,7 @@
 # @Desc    :
 
 from ..models import *
+from django.db.models import Q
 class CoOccuranceAnalyzer(object):
     def __init__(self):
         pass
@@ -95,6 +96,11 @@ class Analyzer(object):
 class CoAnalyzer(Analyzer):
     def __init__(self):
         Analyzer.__init__(self)
+        self.analyzer = {
+            1: self.co_author,
+            2: self.co_institute,
+            3: self.co_keyword
+        }
 
 
     def coourrance(self, new_to_co:list, nodes: dict, links: dict):
@@ -116,28 +122,78 @@ class CoAnalyzer(Analyzer):
                     links[key] += 1
 
 
+    def get_articles(self, params):
+        articles = None
+        try:
+            filter_source = params['f_source']
+            filter_domain = params['f_domain']
+            filter_start = params['f_start']
+            filter_end = params['f_end']
+            if filter_domain.count() == 0:
+                articles = TWoSArticle.objects.filter(f_py__range=(filter_start, filter_end),
+                                                      f_source_id=filter_source.id)
+            else:
+                articles = TWoSArticle.objects.filter(f_py__range=(filter_start, filter_end),
+                                                      f_source_id=filter_source.id, f_domain__in=filter_domain)
+        except Exception as e:
+            error = "获取成果数据出现错误，错误原因：{0}".format(str(e))
+            self.errors.append(error)
+        return articles
 
+    def co_author(self, articles, params):
+        nodes = {}
+        links = {}
+        for article in articles:
+            try:
+                list_authors = article.f_af.split(';')
+                list_authors = [author.strip() for author in list_authors]
+                self.coourrance(list_authors, nodes, links)
+            except Exception as e:
+                error = "成果 {0} 作者共现分析出现错误，错误原因：{0}".format(article.f_ti, str(e))
+                self.errors.append(error)
+        return nodes, links
+
+
+
+    def co_institute(self, articles, params):
+        nodes = {}
+        links = {}
+        for article in articles:
+            try:
+                list_institutes = article.f_c1.split(';')
+                list_institutes = [(institute.split(',')[0]).strip() for institute in list_institutes]
+                self.coourrance(list_institutes, nodes, links)
+            except Exception as e:
+                error = "成果 {0} 机构共现分析出现错误，错误原因：{0}".format(article.f_ti, str(e))
+                self.errors.append(error)
+        return nodes, links
+
+    def co_keyword(self, articles, params):
+        nodes = {}
+        links = {}
+        for article in articles:
+            try:
+                list_keywords = article.f_de.title().split(';')
+                list_keywords = [keyword.strip() for keyword in list_keywords]
+                self.coourrance(list_keywords, nodes, links)
+            except Exception as e:
+                error = "成果 {0} 热点共现分析出现错误，错误原因：{0}".format(article.f_ti, str(e))
+                self.errors.append(error)
+        return nodes, links
 
 
     def co_analysis(self, params:dict):
         nodes = {}
         links = {}
-
-        articles = TArticle.objects.all()
-
-        if params['f_object'] == 1:
-            for article in articles:
-                list_authors = article.f_authors_str.split(',')
-                self.coourrance(list_authors, nodes, links)
-        elif params['f_object'] == 2:
-            for article in articles:
-                list_institutes = article.f_institutes_str.split(',')
-                self.coourrance(list_institutes, nodes, links)
-        elif params['f_object'] == 3:
-            for article in articles:
-                list_keywords = article.f_keywords_str.split(',')
-                self.coourrance(list_keywords, nodes, links)
-        return nodes, links
+        try:
+            articles = self.get_articles(params)
+            if articles is None:
+                return nodes, links, self.errors
+            nodes, links = self.analyzer.get(params['f_object'])(articles, params)
+            return nodes, links
+        except Exception as e:
+            error = "共现分析出现错误，错误原因：{0}".format(str(e))
+            self.errors.append(error)
 
 
 
@@ -159,9 +215,19 @@ def analyze_topn(params: dict):
 class TopAnalyzer(Analyzer):
     def __init__(self):
         Analyzer.__init__(self)
-
-    def topn(self, param:dict):
-        pass
+        self.authors_anlyzer = {
+            'FIRST': self.topn_author_first,
+            'ALL': self.topn_author_all
+        }
+        self.institutes_anlyzer = {
+            'FIRST': self.topn_institutes_first,
+            'ALL': self.topn_institutes_all
+        }
+        self.object_anlyzer = {
+            '研究人员': self.topn_authors,
+            '研究机构': self.topn_institutes,
+            '研究热点': self.topn_keywords
+        }
 
     def dict_to_list_in_order(self, unorder_dict):
         order_list = sorted(unorder_dict.items(), key=lambda x:x[1], reverse=True)
@@ -170,17 +236,16 @@ class TopAnalyzer(Analyzer):
         [(key_list.append(item[0]),value_list.append(item[1])) for item in order_list]
         return key_list, value_list
 
-
-class TopAnalyzerForResearcher(TopAnalyzer):
-    def __init__(self):
-        TopAnalyzer.__init__(self)
+    def default_anlyzer(self):
+        ret = {}
+        return ret
 
     def topn_in_cnki(self, articles):
         first_authors_dict = {}
         all_authors_dict = {}
         for article in articles:
             try:
-                list_authors = article.f_authors_str.split(',')
+                list_authors= article.f_authors_str.split(',')
                 first_author = list_authors[0]
                 if first_author not in first_authors_dict:
                     first_authors_dict[first_author] = 1
@@ -197,15 +262,249 @@ class TopAnalyzerForResearcher(TopAnalyzer):
                 print(error)
         return first_authors_dict, all_authors_dict
 
+    def topn_author_first(self, articles):
+        authors_dict = {}
+        for article in articles:
+            try:
+                list_authors= article.f_af.split(';')
+                first_author = list_authors[0].strip()
+                if first_author not in authors_dict:
+                    authors_dict[first_author] = 1
+                else:
+                    authors_dict[first_author] += 1
+            except Exception as e:
+                error = "文献{0} 分析错误，错误原因：{1}".format(article.f_ti, str(e))
+                print(error)
+        return authors_dict
+
+    def topn_author_all(self, articles):
+        authors_dict = {}
+        for article in articles:
+            try:
+                list_authors = article.f_af.split(';')
+                for author in list_authors:
+                    author = author.strip()
+                    if author not in authors_dict:
+                        authors_dict[author] = 1
+                    else:
+                        authors_dict[author] += 1
+            except Exception as e:
+                error = "文献{0} 分析错误，错误原因：{1}".format(article.f_ti, str(e))
+                print(error)
+        return authors_dict
+
+    def topn_institutes_first(self, articles):
+        institutes_dict = {}
+        for article in articles:
+            try:
+                list_institutes = article.f_c1.split(';')
+                first_institutes = list_institutes[0].strip()
+                institute = (first_institutes.split(',')[0]).strip()
+                if institute not in institutes_dict:
+                    institutes_dict[institute] = 1
+                else:
+                    institutes_dict[institute] += 1
+            except Exception as e:
+                error = "文献{0} 分析错误，错误原因：{1}".format(article.f_ti, str(e))
+                print(error)
+        return institutes_dict
+
+    def topn_institutes_all(self, articles):
+        institutes_dict = {}
+        for article in articles:
+            try:
+                list_institutes = article.f_c1.split(';')
+                for institute in list_institutes:
+                    institute = (institute.split(',')[0]).strip()
+                    if institute not in institutes_dict:
+                        institutes_dict[institute] = 1
+                    else:
+                        institutes_dict[institute] += 1
+            except Exception as e:
+                error = "文献{0} 分析错误，错误原因：{1}".format(article.f_ti, str(e))
+                print(error)
+        return institutes_dict
+
+    def topn_institutes(self, articles, index):
+        institutes_dict = self.institutes_anlyzer.get(index)(articles)
+        return institutes_dict
+
+    def topn_authors(self, articles, index):
+        authors_dict = self.authors_anlyzer.get(index)(articles)
+        return authors_dict
+
+    def topn_keywords(self, articles, index):
+        keywords_dict = {}
+        for article in articles:
+            try:
+                list_keywords = article.f_de.title().split(';')
+                for keyword in list_keywords:
+                    keyword = keyword.strip()
+                    if keyword not in keywords_dict:
+                        keywords_dict[keyword] = 1
+                    else:
+                        keywords_dict[keyword] += 1
+            except Exception as e:
+                error = "文献{0} 分析错误，错误原因：{1}".format(article.f_ti, str(e))
+                print(error)
+        return keywords_dict
+
+
     def topn(self, param:dict):
-        articles = TArticle.objects.all()
         topn = param['f_top']
-        if param['f_source'].f_name == 'CNKI':
-            first_authors_dict, all_authors_dict = self.topn_in_cnki(articles)
-            first_authors_name, first_authors_amount = self.dict_to_list_in_order(first_authors_dict)
-            all_authors_name, all_authors_amount = self.dict_to_list_in_order(all_authors_dict)
-            return first_authors_name[:topn], first_authors_amount[:topn], all_authors_name[:topn], all_authors_amount[:topn]
-        return None
+        object = (param['f_object']).f_object
+        if object == 1:
+            object = 'AUTHOR'
+        elif object == 2:
+            object = 'INSTITUTE'
+        elif object == 3:
+            object = 'KEYWORD'
+        index = param['f_index'].f_abbrv
+        filter_source = param['f_source']
+        filter_domain = param['f_domain']
+        if filter_domain.count() == 0:
+            articles = TWoSArticle.objects.filter(f_py__range=(param['f_start'], param['f_end']), f_source__in=filter_source)
+        else:
+            articles = TWoSArticle.objects.filter(f_py__range=(param['f_start'], param['f_end']), f_source__in=filter_source, f_domain__in=filter_domain)
+
+        ret_dict = self.object_anlyzer.get(object)(articles, index)
+
+        name, amount = self.dict_to_list_in_order(ret_dict)
+        return name[:topn], amount[:topn], articles.count()
+
+
+class TopAnalyzerForResearcher(TopAnalyzer):
+    def __init__(self):
+        TopAnalyzer.__init__(self)
+        self.authors_anlyzer = {
+            'FIRST':self.topn_author_first,
+            'ALL': self.topn_author_all
+        }
+        self.institutes_anlyzer = {
+            'FIRST': self.topn_institutes_first,
+            'ALL':self.topn_institutes_all
+        }
+        self.object_anlyzer = {
+            'AUTHOR': self.topn_authors,
+            'INSTITUTE': self.topn_institutes,
+        }
+
+    def default_anlyzer(self):
+        ret = {}
+        return ret
+
+    def topn_in_cnki(self, articles):
+        first_authors_dict = {}
+        all_authors_dict = {}
+        for article in articles:
+            try:
+                list_authors= article.f_authors_str.split(',')
+                first_author = list_authors[0]
+                if first_author not in first_authors_dict:
+                    first_authors_dict[first_author] = 1
+                else:
+                    first_authors_dict[first_author] += 1
+
+                for author in list_authors:
+                    if author not in all_authors_dict:
+                        all_authors_dict[author] = 1
+                    else:
+                        all_authors_dict[author] += 1
+            except Exception as e:
+                error = "{0} 分析错误，错误原因：{1}".format(article.f_name, str(e))
+                print(error)
+        return first_authors_dict, all_authors_dict
+
+    def topn_author_first(self, articles):
+        authors_dict = {}
+        for article in articles:
+            try:
+                list_authors= article.f_af.split(';')
+                first_author = list_authors[0].strip()
+                if first_author not in authors_dict:
+                    authors_dict[first_author] = 1
+                else:
+                    authors_dict[first_author] += 1
+            except Exception as e:
+                error = "文献{0} 分析错误，错误原因：{1}".format(article.f_ti, str(e))
+                print(error)
+        return authors_dict
+
+    def topn_author_all(self, articles):
+        authors_dict = {}
+        for article in articles:
+            try:
+                list_authors = article.f_af.split(';')
+                for author in list_authors:
+                    author = author.strip()
+                    if author not in authors_dict:
+                        authors_dict[author] = 1
+                    else:
+                        authors_dict[author] += 1
+            except Exception as e:
+                error = "文献{0} 分析错误，错误原因：{1}".format(article.f_ti, str(e))
+                print(error)
+        return authors_dict
+
+    def topn_institutes_first(self, articles):
+        institutes_dict = {}
+        for article in articles:
+            try:
+                list_institutes = article.f_c1.split(';')
+                first_institutes = list_institutes[0].strip()
+                institute = (first_institutes.split(',')[0]).strip()
+                if institute not in institutes_dict:
+                    institutes_dict[institute] = 1
+                else:
+                    institutes_dict[institute] += 1
+            except Exception as e:
+                error = "文献{0} 分析错误，错误原因：{1}".format(article.f_ti, str(e))
+                print(error)
+        return institutes_dict
+
+    def topn_institutes_all(self, articles):
+        institutes_dict = {}
+        for article in articles:
+            try:
+                list_institutes = article.f_c1.split(';')
+                for institute in list_institutes:
+                    institute = (institute.split(',')[0]).strip()
+                    if institute not in institutes_dict:
+                        institutes_dict[institute] = 1
+                    else:
+                        institutes_dict[institute] += 1
+            except Exception as e:
+                error = "文献{0} 分析错误，错误原因：{1}".format(article.f_ti, str(e))
+                print(error)
+        return institutes_dict
+
+    def topn_institutes(self, articles):
+        pass
+
+    def topn_authors(self, articles, index):
+        authors_dict = self.authors_anlyzer.get(index)(articles)
+        return authors_dict
+
+    def topn(self, param:dict):
+        topn = param['f_top']
+        object = param['f_object']
+        if object == 1:
+            object = 'AUTHOR'
+        elif object == 2:
+            object = 'INSTITUTE'
+        index = param['f_index'].f_abbrv
+        filter_source = param['f_source']
+        filter_domain = param['f_domain']
+        if filter_domain.count() == 0:
+            articles = TWoSArticle.objects.filter(f_py__range=(param['f_start'], param['f_end']), f_source_id=filter_source.id)
+        else:
+            articles = TWoSArticle.objects.filter(f_py__range=(param['f_start'], param['f_end']), f_source_id=filter_source.id, f_domain__in=filter_domain)
+
+        ret_dict = self.object_anlyzer.get(object, default=self.default_anlyzer)(articles, index)
+
+        name, amount = self.dict_to_list_in_order(ret_dict)
+        return name[:topn], amount[:topn], articles.count()
+
 
 
 class TopAnalyzerForInstitute(TopAnalyzer):

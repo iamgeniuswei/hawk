@@ -12,18 +12,117 @@
                 </div>
                 <div class="card-content">
                     <div class="card-body">
-                        <form action="{% url 'co' %}" method="post">
-                            {% for field in form_co_params %}
-                                <fieldset class="form-group">
-                                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                    {{ field }}
-                                </fieldset>
-                            {% endfor %}
-                            <div class="card-footer">
-                                <button type="submit" class="btn btn-primary">开始分析</button>
-                                <button type="button" class="btn btn-light-primary">重置</button>
-                            </div>
-                        </form>
+                        <div class="col-lg-6 m-auto">
+                            <form action="{% url 'co' %}" method="post">
+                                <h6>数据源设置</h6>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <fieldset class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">{{ form_co_params.f_source.label }}:</span>
+                                                </div>
+                                                {{ form_co_params.f_source }}
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <fieldset class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">{{ form_co_params.f_domain.label }}:</span>
+                                                </div>
+                                                {{ form_co_params.f_domain }}
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                </div>
+                                <h6>时间设置</h6>
+                                <hr>
+                                <div class="row">
+
+                                    <div class="col-lg-4">
+                                        <fieldset class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">{{ form_co_params.f_start.label }}:</span>
+                                                </div>
+                                                {{ form_co_params.f_start }}
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <fieldset class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">{{ form_co_params.f_end.label }}:</span>
+                                                </div>
+                                                {{ form_co_params.f_end }}
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <fieldset class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">{{ form_co_params.f_slice.label }}:</span>
+                                                </div>
+                                                {{ form_co_params.f_slice }}
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                </div>
+                                <h6>分析设置</h6>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-lg-4">
+                                        <fieldset class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">{{ form_co_params.f_object.label }}:</span>
+                                                </div>
+                                                {{ form_co_params.f_object }}
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <fieldset class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">{{ form_co_params.f_threshold_type.label }}:</span>
+                                                </div>
+                                                {{ form_co_params.f_threshold_type }}
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <fieldset class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">{{ form_co_params.f_threshold.label }}:</span>
+                                                </div>
+                                                {{ form_co_params.f_threshold }}
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="col-lg-4">
+                                        <fieldset class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">{{ form_co_params.f_prune.label }}:</span>
+                                                </div>
+                                                {{ form_co_params.f_prune }}
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <button type="submit" class="btn btn-primary">开始分析</button>
+                                    <button type="button" class="btn btn-light-primary">重置</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
 

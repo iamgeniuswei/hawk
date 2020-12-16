@@ -6,18 +6,6 @@
 
 {% block content-body %}
     <div class="row">
-        <div class="col-lg-10">
-            <div class="card">
-                <div class="card-header">
-                    共现分析
-                </div>
-                <div class="card-content">
-                    <div class="card-body">
-                        <div id="id_chart_co" style="width: 100%;height:2000px;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
         <div class="col-lg-2">
             <div class="card">
                 <div class="card-header">
@@ -38,6 +26,19 @@
             </div>
 
         </div>
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header">
+                    共现分析
+                </div>
+                <div class="card-content">
+                    <div class="card-body">
+                        <div id="id_chart_co" style="width: 100%;height:2000px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 {% endblock %}
 {% block scripts %}
@@ -58,7 +59,7 @@
                 name: node.name,
                 value: node.value,
                 category: node.category,
-                symbolSize: node.value//支持度越大，节点越大
+                symbolSize: node.value*10
             };
         });
 

@@ -5,19 +5,52 @@
 # @Email   : iamgeniuswei@sina.com
 # @File    : file_to_article_parser.py
 # @Desc    :
+import json
 
 import pandas as pd
 from .utils import Utility
 from ..models import *
+from .nlp import *
 import networkx as nx
+import re
+from django.db import transaction
 
 class FileParser(object):
-    def __init__(self, format, path):
-        self._format = format
-        self._path = path
+    def __init__(self, params):
+        self._params = params
+        self._format = params['f_source']
+        self._path = params['f_path']
+        self._errors = list()
+
+    def get_domains(self):
+        domain_objects = []
+        list_domains = self._params['f_domain']
+        if len(list_domains) == 0:
+            return domain_objects
+        for domain in list_domains:
+            domain_object = TTechDomain.objects.get_or_create(f_name=domain)[0]
+            domain_objects.append(domain_object)
+        return domain_objects
 
     def parse_files_to_articles(self):
-        pass
+        new_articles = []
+        try:
+            files = Utility.get_files_in_dir(self._path)
+            for file in files:
+                try:
+                    df = pd.read_excel(file, sheet_name=0).fillna(value='佚名')
+                    articles = self.parse_single_file(df)
+                    new_articles += articles
+                except Exception as e:
+                    error = "文件 {0} 解析错误，错误原因：{1}".format(file, str(e))
+                    self._errors.append(error)
+                    print(error)
+            return new_articles, self._errors
+        except Exception as e:
+            error = "文件解析错误，错误原因：{0}".format(str(e))
+            self._errors.append(error)
+            print(error)
+            return new_articles, self._errors
 
     def str_to_list(self, src_str):
         '''
@@ -36,13 +69,19 @@ class FileParser(object):
             list_str.append(src_str)
         return list(filter(None, list_str))
 
+    def parse_single_file(self, df):
+        pass
+
+
+
 class CNKIParser(FileParser):
     def parse_files_to_articles(self):
+        new_articles = []
         try:
             files = Utility.get_files_in_dir(self._path)
             for file in files:
-                self.parse_single_file(file)
-
+                articles = self.parse_single_file(file)
+                new_articles.append(articles)
         except Exception as e:
             print(str(e))
 
@@ -138,6 +177,275 @@ class CNKIParser(FileParser):
                 return 2020
 
 
+class WoSParser(FileParser):
+
+    def str_to_int(self, nr, u1, u2, py):
+        if type(nr) == type(int):
+            int_nr = int(nr)
+        else:
+            int_nr = 0
+        if u1.isdigit():
+            int_u1 = int(u1)
+        else:
+            int_u1 = 0
+        if u2.isdigit():
+            int_u2 = int(u2)
+        else:
+            int_u2 = 0
+        if py.isdigit():
+            int_py = int(py)
+        else:
+            int_py = 0
+        return int_nr, int_u1, int_u2, int_py
+
+    def get_institute(self, str_intitutes, str_authors):
+        author_institutes = {}
+        list_authors = str_authors.split(';')
+        if '[' in str_intitutes and ']' in str_intitutes:
+            str_intitutes += ';'
+            list_institutes = re.findall(r'\[.*?\].*?;', str_intitutes)
+            for author in list_authors:
+                author = author.strip()
+                for institute in list_institutes:
+                    if author in institute:
+                        institute = (re.search(r'\].*?;', institute).group()).strip('] ').strip(';')
+                        author_institutes[author] = institute
+                        break
+        else:
+            for author in list_authors:
+                author = author.strip()
+                author_institutes[author] = str_intitutes
+        return author_institutes
+
+
+
+
+    def parse_single_file(self, file):
+        try:
+            df = pd.read_excel(file, sheet_name=0).fillna(value='佚名')
+            domain_objects = []
+            for domain in self._params['f_domain']:
+                domain_object = TTechDomain.objects.get_or_create(f_name=domain)[0]
+                domain_objects.append(domain_object)
+            source_object = TDataSource.objects.get_or_create(f_name=self._params['f_source'])[0]
+            for row in df.index:
+                str_pt = df.loc[row].values[0]
+                str_dt = df.loc[row].values[13]
+                str_fu = df.loc[row].values[27]
+                str_fx = df.loc[row].values[28]
+                str_af = df.loc[row].values[5]
+                str_ti = df.loc[row].values[8]
+                str_de = df.loc[row].values[19]
+                str_id = df.loc[row].values[20]
+                str_ab = df.loc[row].values[21]
+                str_c1 = df.loc[row].values[22]
+                str_cr = df.loc[row].values[29]
+                int_nr = df.loc[row].values[30]
+                int_u1 = df.loc[row].values[33]
+                int_u2 = df.loc[row].values[34]
+                int_py = df.loc[row].values[44]
+                str_wc = df.loc[row].values[58]
+                str_sc = df.loc[row].values[59]
+
+                authors_institutes = self.get_institute(str_c1, str_af)
+                list_institutes = []
+                for item in authors_institutes.values():
+                    if item not in list_institutes:
+                        list_institutes.append(item)
+                str_c1 = ';'.join(list_institutes)
+                try:
+                    with transaction.atomic():
+                        new_article = TWoSArticle.objects.get_or_create(f_ti=str_ti,
+                                                                        f_pt=str_pt,
+                                                                        f_dt=str_dt,
+                                                                        f_fu=str_fu,
+                                                                        f_fx=str_fx,
+                                                                        f_af=str_af,
+                                                                        f_de=str_de,
+                                                                        f_id=str_id,
+                                                                        f_ab=str_ab,
+                                                                        f_c1=str_c1,
+                                                                        f_cr=str_cr,
+                                                                        f_nr=int_nr,
+                                                                        f_u1=int_u1,
+                                                                        f_u2=int_u2,
+                                                                        f_py=int_py,
+                                                                        f_wc=str_wc,
+                                                                        f_sc=str_sc,
+                                                                        f_source_id=source_object.id)[0]
+                        for domain in domain_objects:
+                            new_article.f_domain.add(domain)
+                        new_keywords = self.persist_keywords(str_de, int_py)
+                        for keyword in new_keywords:
+                            new_article.f_keywords.add(keyword)
+                        new_authors, new_institutes = self.persist_authors_and_institutes(authors_institutes)
+                        index = 0
+                        for author in new_authors:
+                            index += 1
+                            TAuthorOrder.objects.update_or_create(f_author=author, f_article=new_article, f_order=index)
+                        for institute in new_institutes:
+                            institute.f_articles.add(new_article)
+
+                except Exception as e:
+                    error = "文献 {0} 解析错误，错误原因：{1}".format(str_ti, str(e))
+                    self._errors.append(error)
+                    print(error)
+
+        except Exception as e:
+            error = "文件 {0} 解析错误，错误原因：{1}".format(file, str(e))
+            self._errors.append(error)
+            print(error)
+
+
+    def persist_authors_and_institutes(self, authors_institutes):
+        object_authors = []
+        object_institutes = []
+        for key, value in authors_institutes.items():
+            list_inst = value.split(',')
+            object_inst = TWoSInstitute.objects.get_or_create(f_name=list_inst[0].strip())[0]
+            object_inst.f_fullname = value
+            object_inst.f_country = list_inst[-1]
+            object_inst.save()
+            object_author = TWoSAuthor.objects.get_or_create(f_name=key)[0]
+            object_author.f_institutes.add(object_inst)
+            object_authors.append(object_author)
+            if object_inst not in object_institutes:
+                object_institutes.append(object_inst)
+
+        return object_authors, object_institutes
+
+    def persist_keywords(self, keywords, year):
+        list_keyword = keywords.split(';')
+        object_keywords = []
+        for keyword in list_keyword:
+            keyword = keyword.strip()
+            object_keyword, created = TKeyword.objects.get_or_create(f_name=keyword)
+            if created is True:
+                object_keyword.f_freq = 1
+                object_keyword.f_promote = year
+                object_keyword.save()
+            else:
+                object_keyword.f_freq += 1
+                object_keyword.f_promote = year if object_keyword.f_promote > year else object_keyword.f_promote
+                object_keyword.save()
+            object_keywords.append(object_keyword)
+        return object_keywords
+
+
+
+
+
+
+
+class CNKIPatentParser(FileParser):
+
+    def map_author_institute(self, str_authors, str_institutes):
+        dict_author_institute = {}
+        list_authors = str_authors.split(";")
+        list_institutes = str_institutes.split(";")
+        for author in list_authors:
+            if author not in dict_author_institute:
+                dict_author_institute[author] = list_institutes[0]
+        return dict_author_institute, list_institutes
+
+    def persist_authors_institutes(self, str_authors, str_institutes):
+        dict_author_institute, list_institutes = self.map_author_institute(str_authors, str_institutes)
+        object_authors = []
+        object_institutes = []
+        for key, value in dict_author_institute.items():
+            object_inst = TWoSInstitute.objects.get_or_create(f_name=value)[0]
+            object_author = TWoSAuthor.objects.get_or_create(f_name=key)[0]
+            object_author.f_institutes.add(object_inst)
+            object_authors.append(object_author)
+            if object_inst not in object_institutes:
+                object_institutes.append(object_inst)
+        for institute in list_institutes[1:]:
+            object_inst = TWoSInstitute.objects.get_or_create(f_name=value)[0]
+            if object_inst not in object_institutes:
+                object_institutes.append(object_inst)
+        return object_authors, object_institutes
+
+    def persist_keywords(self, list_keywords, int_py):
+        object_keywords = []
+        return object_keywords
+
+
+    def get_py(self, str_py):
+        if str_py == '佚名':
+            return 2000
+        return int(str_py.split('-')[0])
+
+
+
+
+    def parse_single_file(self, df):
+        articles = []
+        try:
+            domain_objects = []
+            for domain in self._params['f_domain']:
+                domain_object = TTechDomain.objects.get_or_create(f_name=domain)[0]
+                domain_objects.append(domain_object)
+            source_object = TDataSource.objects.get_or_create(f_name=self._params['f_source'])[0]
+            for row in df.index:
+                str_af = df.loc[row].values[1]
+                str_ti = df.loc[row].values[3]
+                str_ab = df.loc[row].values[6]
+                str_c1 = df.loc[row].values[2]
+                int_py = self.get_py(df.loc[row].values[5])
+                str_memo = df.loc[row].values[4] + df.loc[row].values[7]
+                try:
+                    with transaction.atomic():
+                        new_article = TWoSArticle.objects.get_or_create(f_ti=str_ti,
+                                                                        f_af=str_af,
+                                                                        f_ab=str_ab,
+                                                                        f_c1=str_c1,
+                                                                        f_py=int_py,
+                                                                        f_memo=str_memo,
+                                                                        f_source_id=source_object.id)[0]
+                        for domain in domain_objects:
+                            new_article.f_domain.add(domain)
+                        keywords = NLPHelper.get_keyword(str_ab)
+                        new_keywords = self.persist_keywords(keywords, int_py)
+                        for keyword in new_keywords:
+                            new_article.f_keywords.add(keyword)
+                        new_authors, new_institutes = self.persist_authors_institutes(str_af, str_c1)
+                        index = 0
+                        for author in new_authors:
+                            index += 1
+                            TAuthorOrder.objects.update_or_create(f_author=author, f_article=new_article, f_order=index)
+                        for institute in new_institutes:
+                            institute.f_articles.add(new_article)
+                        articles.append(new_article)
+                except Exception as e:
+                    error = "文献 {0} 解析错误，错误原因：{1}".format(str_ti, str(e))
+                    self._errors.append(error)
+                    print(error)
+        except Exception as e:
+            error = "文件 {0} 解析错误，错误原因：{1}".format(df, str(e))
+            self._errors.append(error)
+            print(error)
+        return articles
+
+
+class ParserHelper(object):
+
+    @staticmethod
+    def parse_article_to_db(params):
+        params = json.loads(s=params)
+        parser = None
+        if params['f_source'] == 'WoS':
+            parser = WoSParser(params)
+        elif params['f_source'] == 'CNKI':
+            parser = CNKIParser(params)
+        elif params['f_source'] == 'CNKI专利':
+            parser = CNKIPatentParser(params)
+        new_articles = (parser.parse_files_to_articles())[0]
+        with transaction.atomic():
+            new_project = TProject(f_name=params['f_batchname'],
+                                   f_topic=params['f_batchname'])
+            new_project.save()
+            for article in new_articles:
+                new_project.f_aritcles.add(article)
 
 
 

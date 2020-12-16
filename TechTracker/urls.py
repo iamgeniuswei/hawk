@@ -21,5 +21,10 @@ urlpatterns = [
     path('cokeyword', views.html_keyword_co, name='cokeyword'),
     path('table', views.html_author_info, name='table'),
     path('config_topn', views.html_topn_config, name='ConfigTopN'),
-    path('config_co', views.html_co_config, name='ConfigCo')
+    path('config_co', views.html_co_config, name='ConfigCo'),
+    path('config_parser', views.html_config_parser, name='ConfigParser'),
+    path('persist_domain', views.json_persist_domain, name='PersistDomain'),
+    path('topn_embed', views.html_topn_embed, name='TopNEmbed'),
+    path('author_detail', views.html_node_detail, name='AuthorDetail'),
+    path('clean', views.json_data_clean, name='CleanData')
 ]

@@ -1,0 +1,47 @@
+{% load static %}
+
+<div class="card">
+    <div class="card-header">
+        作者详情
+    </div>
+    <div class="card-content">
+        <div class="card-body">
+            <form id="id_form_author">
+                {% for field in form_author %}
+                    <fieldset class="form-group">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">{{ field.label }}:</span>
+                            </div>
+                            {{ field }}
+                        </div>
+                    </fieldset>
+                {% endfor %}
+            </form>
+            <div class="card-text">
+                <h6>作者机构</h6>
+                <ul class="list-group">
+                    {% for item in institutes %}
+                        <li class="list-group-item">
+                            {{ item }}
+                            <a href="https://www.baidu.com/s?wd={{ item }}">百度查询</a>
+                            <a href="https://www.google.com.hk/search?q={{ item }}">Google查询</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <h6>作者产出</h6>
+                <ul class="list-group">
+                    {% for item in articles %}
+                        <li class="list-group-item">
+                            {{ item }}-{{ item.f_py }}
+                            <a href="https://xueshu.baidu.com/s?wd={{ item }}">百度学术查询</a>
+                            <a href="https://scholar.google.com.hk/scholar?q={{ item }}">Google学术查询</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+
+            </div>
+
+        </div>
+    </div>
+</div>

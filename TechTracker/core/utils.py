@@ -16,9 +16,15 @@ from typing import List, Union
 class Utility(object):
     @staticmethod
     def get_files_in_dir(path):
-        files: Union[List[str], List[bytes]] = os.listdir(path)
-        path_list = []
-        for file in files:
-            file_path = os.path.join(path,file)
-            path_list.append(file_path)
-        return path_list
+        """
+        获取文件夹的所有合法文件列表
+        @param path:
+        @return:
+        """
+        filenames: Union[List[str], List[bytes]] = os.listdir(path)
+        files = []
+        for file in filenames:
+            file_path = os.path.join(path, file)
+            if os.path.isfile(file_path):
+                files.append(file_path)
+        return files

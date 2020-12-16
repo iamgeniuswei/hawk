@@ -7,41 +7,130 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">
-                        TOP分析参数设置
+                        词频分析参数设置
+                    </div>
+                    <div class="heading-elements">
+                        <ul class="list-inline mb-0">
+                            <li>
+                                <a data-action="collapse">
+                                    <i class="bx bx-chevron-down"></i>
+                                </a>
+                            </li>
+                            <li>
+                                <a data-action="expand">
+                                    <i class="bx bx-fullscreen"></i>
+                                </a>
+                            </li>
+                            <li>
+                                <a data-action="reload">
+                                    <i class="bx bx-revision"></i>
+                                </a>
+                            </li>
+                            <li>
+                                <a data-action="close">
+                                    <i class="bx bx-x"></i>
+                                </a>
+                            </li>
+                        </ul>
                     </div>
                 </div>
                 <div class="card-content">
                     <div class="card-body">
-                    <form action="{% url 'topn' %}" method="post">
-                        {% for field in form_topn_params %}
-                            {% ifnotequal field.name 'f_object' %}
-                                <fieldset class="form-group">
-                                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                    {{ field }}
-                                </fieldset>
-                            {% endifnotequal %}
-                        {% endfor %}
-                        <div class="form-group">
-                            <label>分析对象</label>
-                            <ul class="list-unstyled mb-0">
-                            {% for choice in form_topn_params.f_object %}
-                                <li class="d-inline-block mr-2 mb-1">
-                                    <fieldset>
-                                        <div class="radio">
-                                            {{ choice.tag }}
-                                            <label for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
-                                        </div>
-                                    </fieldset>
-                                </li>
-                            {% endfor %}
-                        </ul>
+                        <div class="col-lg-6 m-auto">
+                            <form action="{% url 'topn' %}" method="post">
+                                <h6>数据源设置</h6>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <fieldset class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">{{ form_topn_params.f_source.label }}:</span>
+                                                </div>
+                                                {{ form_topn_params.f_source }}
+                                            </div>
+                                            <span style="color: orangered">至少选择一种文献类型</span>
+                                        </fieldset>
+                                    </div>
+                                    <div class="col-lg-12">
+                                        <fieldset class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">{{ form_topn_params.f_domain.label }}:</span>
+                                                </div>
+                                                {{ form_topn_params.f_domain }}
+                                            </div>
+                                            <span style="color: orangered">可不选，则不区分文献的技术领域</span>
+                                        </fieldset>
+                                    </div>
+                                </div>
+                                <h6>时间设置</h6>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <fieldset class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">{{ form_topn_params.f_start.label }}:</span>
+                                                </div>
+                                                {{ form_topn_params.f_start }}
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <fieldset class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">{{ form_topn_params.f_end.label }}:</span>
+                                                </div>
+                                                {{ form_topn_params.f_end }}
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                </div>
+                                <h6>分析设置</h6>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <fieldset class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">{{ form_topn_params.f_object.label }}:</span>
+                                                </div>
+                                                {{ form_topn_params.f_object }}
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                    <div class="col-lg-12">
+                                        <fieldset class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">{{ form_topn_params.f_index.label }}:</span>
+                                                </div>
+                                                {{ form_topn_params.f_index }}
+                                            </div>
+                                            <span>研究对象为”研究热点“时，该项不选</span>
+                                        </fieldset>
+                                    </div>
+                                    <div class="col-lg-12">
+                                        <fieldset class="form-group">
+                                            <div class="input-group">
+                                                <div class="input-group-prepend">
+                                                    <span class="input-group-text">{{ form_topn_params.f_top.label }}:</span>
+                                                </div>
+                                                {{ form_topn_params.f_top }}
+
+                                            </div>
+                                        </fieldset>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <button type="submit" class="btn btn-primary">开始分析</button>
+                                    <button type="button" class="btn btn-light-primary">重置</button>
+                                </div>
+                            </form>
                         </div>
-                        <div class="card-footer">
-                            <button type="submit" class="btn btn-primary">开始分析</button>
-                            <button type="button" class="btn btn-light-primary">重置</button>
-                        </div>
-                    </form>
-                </div>
+                    </div>
                 </div>
 
             </div>

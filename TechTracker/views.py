@@ -1,15 +1,19 @@
 import json
 
+from django.core import serializers
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseServerError
+from django.http import HttpResponse, HttpResponseServerError, JsonResponse
 # Create your views here.
 from .forms import *
 from .core.file_to_article_parser import *
-from django.db.models import Count
+from django.db.models import Count, Max
 import pandas as pd
 from .core.analyzer import *
 import math
+from .tasks import *
 def index(request):
+    res = test_task.delay(1, 3)
+    print(res.task_id)
     return render(request, 'TechTracker/index.html')
 
 def cnki(request):
@@ -164,6 +168,8 @@ def html_author_info(request):
         print(str(e))
 
 
+
+
 def html_topn_config(request):
     try:
         form_topn_params = FTopAnalysisParams()
@@ -171,27 +177,85 @@ def html_topn_config(request):
     except Exception as e:
         print(str(e))
 
+def remove_node(request):
+    try:
+        pass
+    except Exception as e:
+        print(str(e))
+
+topn_object_dict = {
+    1 : '研究人员',
+    2 : '研究机构',
+    3 : '研究热点'
+}
 
 def html_topn(request):
     try:
         form_topn_params = FTopAnalysisParams(request.POST)
         if form_topn_params.is_valid():
-            if form_topn_params.cleaned_data['f_object'] == 1:
-                first_names, first_amounts, all_names, all_amounts = analyze_topn(form_topn_params.cleaned_data)
-                show_tag = {'show_all': 1, 'show_first': 1, 'show_g': 0}
-                return render(request, 'TechTracker/page_topn.html', locals())
-            elif form_topn_params.cleaned_data['f_object'] == 2:
-                all_names, all_amounts = analyze_topn(form_topn_params.cleaned_data)
-                show_tag = {'show_all': 1, 'show_first': 0, 'show_g': 0}
-                return render(request, 'TechTracker/page_topn.html', locals())
-            elif form_topn_params.cleaned_data['f_object'] == 3:
-                all_names, all_amounts = analyze_topn(form_topn_params.cleaned_data)
-                show_tag = {'show_all': 1, 'show_first': 0, 'show_g': 0}
-                return render(request, 'TechTracker/page_topn.html', locals())
+            topn = form_topn_params.cleaned_data['f_top']
+            topn_object = form_topn_params.cleaned_data['f_object']
+            topn_index = form_topn_params.cleaned_data['f_index'].f_index
+            anlyzer = TopAnalyzer()
+            names, amounts, article_count = anlyzer.topn(form_topn_params.cleaned_data)
+            nodes = []
+            for name, amount in zip(names, amounts):
+                tmp = {
+                    'name': name,
+                    'value': amount
+                }
+                nodes.append(tmp)
+            return render(request, 'TechTracker/page_topn.html', locals())
         else:
             return HttpResponseServerError()
     except Exception as e:
         print(str(e))
+
+
+def html_topn_embed(request):
+    try:
+        form_topn_params = FTopAnalysisParams(request.POST)
+        if form_topn_params.is_valid():
+            topn = form_topn_params.cleaned_data['f_top']
+            topn_title = form_topn_params.cleaned_data['f_index'].f_index
+            names, amounts, article_count = analyze_topn(form_topn_params.cleaned_data)
+            return render(request, 'TechTracker/html_topn_embed.html', locals())
+        else:
+            return HttpResponseServerError()
+    except Exception as e:
+        print(str(e))
+
+
+def html_node_detail(request):
+    try:
+        name = request.POST['name']
+        object = request.POST['object']
+        count = int(request.POST['count'])
+        if object == '研究人员':
+            authors = TWoSAuthor.objects.filter(f_name=name)
+            form_author = FWosAuthor(instance=authors[0])
+            author = authors[0]
+            articles = author.f_articles.all()
+            institutes = author.f_institutes.all()
+            return render(request, 'TechTracker/html_author_detail.html', locals())
+        elif object == '研究机构':
+            institutes = TWoSInstitute.objects.filter(f_name=name)
+            form_institute = FWosInstitute(instance=institutes[0])
+            institute = institutes[0]
+            articles = institute.f_articles.all()
+            year_articles = articles.values('f_py').annotate(num_py=Count('f_py'))
+            return render(request, 'TechTracker/html_institute_detail.html', locals())
+        elif object == '研究热点':
+            keywords = TKeyword.objects.filter(f_name=name)
+            keyword = keywords[0]
+            form_keyword = FKeyword(instance=keyword)
+            articles = keyword.wosarticle_keywords.all().order_by('-f_py')
+            return render(request, 'TechTracker/html_keyword_detail.html', locals())
+
+
+    except Exception as e:
+         print(str(e))
+
 
 
 def html_co_config(request):
@@ -235,5 +299,64 @@ def html_co(request):
                     categories.append({'name': "TOP %" + str(i/category)})
 
             return render(request, 'TechTracker/html_co.html', locals())
+    except Exception as e:
+        print(str(e))
+
+
+def html_config_parser(request):
+    try:
+        if request.method == 'GET':
+            form_params = FParserParams()
+            form_domains = FTechDomain()
+            form_source = FDataSource()
+            return render(request, 'TechTracker/html_parser_config.html', locals())
+        elif request.method == 'POST':
+            form_params = FParserParams(request.POST)
+
+            # 为了将任务提交至celery后台执行，必须将参数转换成json格式
+            if form_params.is_valid():
+                params = {}
+                params['f_path'] = form_params.cleaned_data['f_path'].strip('"')
+                params['f_source'] = form_params.cleaned_data['f_source'].f_name
+                params['f_batchname'] = form_params.cleaned_data['f_batchname']
+                domains = list()
+                for domain in form_params.cleaned_data['f_domain']:
+                    domains.append(domain.f_name)
+                if len(domains) > 0:
+                    params['f_domain'] = domains
+                params = json.dumps(params)
+                try:
+                    ParserHelper.parse_article_to_db(params)
+                    return render(request, 'TechTracker/html_parser_status.html', locals())
+                except Exception as e:
+                    print(str(e))
+                return render(request, 'TechTracker/html_parser_status.html', locals())
+            else:
+                pass
+
+    except Exception as e:
+        print(str(e))
+
+
+def json_persist_domain(request):
+    form_domains = FTechDomain(request.POST)
+    if form_domains.is_valid():
+        new_entry = form_domains.save(commit=False)
+        new_entry.save()
+        return JsonResponse({'flag': True, 'id':new_entry.id}, safe=False)
+
+
+def json_data_clean(request):
+    try:
+        type = request.POST['type']
+        to_clean = request.POST.getlist('to_clean')
+        if type == 'discard':
+            for item in to_clean:
+                keyword = TKeyword.objects.get(f_name=item)
+                articles = keyword.wosarticle_keywords.all().order_by('-f_py')
+                articles.f_keywords.remove(keyword)
+                keyword.delete()
+        elif type == 'merge':
+            pass
     except Exception as e:
         print(str(e))

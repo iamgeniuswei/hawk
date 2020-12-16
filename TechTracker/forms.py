@@ -10,22 +10,18 @@ from .models import *
 class FProject(forms.ModelForm):
     class Meta:
         model = TProject
-        fields = ['f_name', 'f_topic', 'f_time']
+        fields = ['f_name', 'f_topic']
 
 
 class FTopAnalysisParams(forms.ModelForm):
-    f_object = forms.TypedChoiceField(label='分析对象',
-        choices=ANALYSIS_OBJECT, widget=forms.RadioSelect, coerce=int
-    )
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)  # 初始化父类方法
         for field in self.fields.values():
-            if field.label != '分析对象':
-                field.widget.attrs = {'class': 'form-control'}
+            field.widget.attrs = {'class': 'form-control'}
 
     class Meta:
         model = TTopAnalysisParams
-        fields = ['f_purpose', 'f_start', 'f_end', 'f_domain', 'f_source' , 'f_top']
+        fields = ['f_start', 'f_end', 'f_object', 'f_domain', 'f_source' ,'f_index', 'f_top']
 
 
 class FCoAnalysisParams(forms.ModelForm):
@@ -36,4 +32,66 @@ class FCoAnalysisParams(forms.ModelForm):
 
     class Meta:
         model = TCoAnalysisParams
+        fields = '__all__'
+
+
+class FParserParams(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)  # 初始化父类方法
+        for field in self.fields.values():
+            field.widget.attrs = {'class': 'form-control'}
+
+    class Meta:
+        model = TParserParams
+        fields = '__all__'
+
+class FTechDomain(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)  # 初始化父类方法
+        for field in self.fields.values():
+            field.widget.attrs = {'class': 'form-control'}
+
+    class Meta:
+        model = TTechDomain
+        fields = '__all__'
+
+
+class FDataSource(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)  # 初始化父类方法
+        for field in self.fields.values():
+            field.widget.attrs = {'class': 'form-control'}
+
+    class Meta:
+        model = TDataSource
+        fields = '__all__'
+
+class FWosAuthor(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)  # 初始化父类方法
+        for field in self.fields.values():
+            field.widget.attrs = {'class': 'form-control'}
+
+    class Meta:
+        model = TWoSAuthor
+        fields = ['f_name', 'f_chinese', 'f_memo']
+
+class FWosInstitute(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)  # 初始化父类方法
+        for field in self.fields.values():
+            field.widget.attrs = {'class': 'form-control'}
+
+    class Meta:
+        model = TWoSInstitute
+        fields = ['f_name', 'f_chinese', 'f_fullname', 'f_memo']
+
+class FKeyword(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)  # 初始化父类方法
+        for field in self.fields.values():
+            field.widget.attrs = {'class': 'form-control'}
+
+    class Meta:
+        model = TKeyword
         fields = '__all__'

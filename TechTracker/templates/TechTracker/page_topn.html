@@ -1,48 +1,145 @@
 {% extends 'TechTracker/index.html' %}
 {% load static %}
+{% block css %}
+    <link rel="stylesheet" href="{% static 'DataTables/css/jquery.dataTables.css' %}">
+{% endblock %}
 {% block content-body %}
     <div class="row">
         <div class="col-lg-12">
             <div class="card">
                 <div class="card-header">
-                    第一作者发文数
+                    <strong style="color: red">{{ topn_object }}-</strong>
+                    <strong style="color: red">{{ topn_index }}-</strong>
+                    in <strong style="color: red"> {{ article_count }} </strong>份成果
                 </div>
                 <div class="card-content">
                     <div class="card-body">
-                        <div id="id_chart_first" style="width: 100%;height:400px;"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">
-                    总发文数
-                </div>
-                <div class="card-content">
-                    <div class="card-body">
-                        <div id="id_chart_all" style="width: 100%;height:400px;"></div>
+                        <div id="id_chart" style="width: 100%;height:400px;"></div>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
+    <div class="row" id="id_chart_container"></div>
+    <div class="row">
+        <div id="id_node_detail" class="col-lg-12" style="display: none">
+
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-lg-2 m-auto">
+            <button type="button" class="btn btn-primary" onclick="addNewTop()">增加对比指标</button>
+            <button type="button" class="btn btn-primary" onclick="displayController()">数据清洗</button>
+
+        </div>
+    </div>
+
+
+    <!-- Vertically Centered modal Modal -->
+    <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-centered modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalCenterTitle">TOPN参数配置</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <i class="bx bx-x"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="id_form_topn_params">
+                        {% for field in form_topn_params %}
+                            <fieldset class="form-group">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">{{ field.label }}:</span>
+                                    </div>
+                                    {{ field }}
+                                </div>
+                            </fieldset>
+                        {% endfor %}
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light-secondary" data-dismiss="modal">
+                        <i class="bx bx-x d-block d-sm-none"></i>
+                        <span class="d-none d-sm-block">Close</span>
+                    </button>
+                    <button type="button" class="btn btn-primary ml-1" onclick="displayNewTop()">
+                        <i class="bx bx-check d-block d-sm-none"></i>
+                        <span class="d-none d-sm-block">Accept</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vertically Centered modal Modal -->
+    <div class="modal fade" id="id_controller" tabindex="-1" role="dialog"
+         aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-centered modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalCenterTitle">数据清洗</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <i class="bx bx-x"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <table id="id_node_table" class="display" style="width:100%">
+                        <thead>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light-secondary" data-dismiss="modal">
+                        <i class="bx bx-x d-block d-sm-none"></i>
+                        <span class="d-none d-sm-block">Close</span>
+                    </button>
+                    <button type="button" class="btn btn-primary ml-1" onclick="displayNewTop()">
+                        <i class="bx bx-check d-block d-sm-none"></i>
+                        <span class="d-none d-sm-block">Accept</span>
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="discardNode()">
+                        删除节点
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="mergeNode()">
+                        合并节点
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
 {% block scripts %}
-    <script src="{% static 'jquery/jquery-3.5.1.js' %}"></script>
+    {#    <script src="{% static 'jquery/jquery-3.5.1.js' %}"></script>#}
+    {#    <script src="{% static 'DataTables/datatables.js' %}" type="text/javascript" charset="utf-8"></script>#}
     <script src="{% static 'echarts/echarts.js' %}" type="text/javascript" charset="utf-8"></script>
     <script src="{% static 'echarts/extension/dataTool.js' %}" type="text/javascript" charset="utf-8"></script>
+
+    <script src="{% static 'DataTables/DataTables-1.10.22/js/jquery.dataTables.js' %}" type="text/javascript"></script>
+
+{#    <script src="{% static 'DataTables/datatables.js' %}" type="text/javascript" charset="utf-8"></script>#}
+    {#    <script src="{% static 'bootstrap/js/bootstrap.js' %}" type="text/javascript" charset="utf-8"></script>#}
+    {#    #}
+
     <script>
-        var chart_first = echarts.init(document.getElementById('id_chart_first'));
-        var chart_all = echarts.init(document.getElementById('id_chart_all'));
-        var show_tag = {{ show_tag | safe }};
-        var fisrt_names = [];
-        var first_amounts = [];
-        var all_names = [];
-        var all_amounts = []
-        if (show_tag['show_first'] === 1) {
-            {% if first_names %}
-            first_names = {{ first_names | safe }};
-            first_amounts = {{ first_amounts | safe }}
-            {% endif %}
+
+        function addNewTop() {
+            $("#exampleModalCenter").modal();
+        }
+
+        function displayController() {
+            $("#id_controller").modal();
+        }
+
+        var chart_first = echarts.init(document.getElementById('id_chart'));
+        var names = {{ names | safe }};
+        var amounts = {{ amounts | safe }}
             option = {
                 tooltip: {},
                 xAxis: {
@@ -52,7 +149,7 @@
                         rotate: 40,
 
                     },
-                    data: all_names,
+                    data: names,
                 },
                 yAxis: {
                     type: 'value',
@@ -65,7 +162,7 @@
                     bottom: '35%'
                 },
                 series: [{
-                    data: first_amounts,
+                    data: amounts,
                     type: 'bar',
                     showBackground: true,
                     backgroundStyle: {
@@ -78,52 +175,141 @@
                     }
                 }]
             };
-            chart_first.setOption(option);
+        chart_first.setOption(option);
+        window.onresize = function () {
+            chart_first.resize();
         }
-        else {
-            $("#id_chart_first").css('display', 'none');
+        chart_first.on('click', function (params) {
+            {#alert(params.name);#}
+            {#alert(params.value);#}
+            $("#id_node_detail").css('display', '');
+            $.ajax({
+                url: '{% url 'AuthorDetail' %}',
+                data: {
+                    'name': params.name,
+                    'object': '{{ topn_object }}',
+                    'count': params.value
+                },
+                type: 'post',
+                success: function (data) {
+                    $("#id_node_detail").html(data);
+                }
+            })
+        });
+
+
+        function displayNewTop() {
+            var params = $("#id_form_topn_params").serialize();
+            $.ajax({
+                url: '{% url 'TopNEmbed' %}',
+                data: params,
+                type: 'post',
+                success: function (data) {
+                    $("#id_chart_container").append(data);
+                }
+
+            })
         }
-        if(show_tag['show_all'] === 1)
-        {
-            option = {
-                tooltip: {},
-                xAxis: {
-                    type: 'category',
-                    axisLabel: {
-                        // interval: 0,
-                        rotate: 40,
 
-                    },
-                    data: {{ all_names | safe }}
-                },
-                yAxis: {
-                    type: 'value',
-                    minInterval: 1,
-                    boundaryGap: [0, "0.2"],
+        var nodes_raw =
+        {{ nodes|safe }}
 
+        var table = $('#id_node_table').DataTable({
+            data: nodes_raw,
+            "paging": false,
+            scrollY: '150vh',
+            scrollCollapse: true,
+            "columns": [
+                {"data": "name", title: "节点"},
+                {"data": "value", title: "频次"},
+                {
+                    "data": "",
+                    title: '<input type="checkbox" id="checkAll">'
+                }
+            ],
+            "aLengthMenu": [10, 20, 30, 40],
+            "iDisplayLength": 10,
+            "aoColumnDefs": [{
+                "sClass": "text-center",
+                "targets": -1
+            }, {
+                "bSortable": false,
+                "aTargets": -1
+            }, {
+                "render": function (data, type) {
+                    return "<div align='center'><input type='checkbox' name='ckb-jobid' value=''" + data + "></div>";
                 },
-                grid: {
-                    left: '10%',
-                    bottom: '35%'
-                },
-                series: [{
-                    data: {{ all_amounts }},
-                    type: 'bar',
-                    showBackground: true,
-                    backgroundStyle: {
-                        color: 'rgba(220, 220, 220, 0.8)'
-                    },
-                    itemStyle: {
-                        color: '#5A8DEE',
+                "aTargets": -1 //最后一列
+            },
+            ],
+        });
+
+        $("#checkAll").off().on("click", function () {
+            if (this.checked) {
+                $(this).attr('checked', 'checked')
+                $("input[name='ckb-jobid']").each(function () {
+                    this.checked = true;
+                });
+            } else {
+                $(this).removeAttr('checked')
+                $("input[name='ckb-jobid']").each(function () {
+                    this.checked = false;
+                });
+            }
+        });
+        $("input[name='ckb-jobid']").off().on("click", function () {
+            if ($(this).is(":checked") == false) {
+                $("#checkAll").prop("checked", false);
+            } else {
+                var flag = true;
+                $("#checkAll").prop("checked", true);
+                $("input[name='ckb-jobid']").each(function () {
+                    if (this.checked == false) {
+                        $("#checkAll").prop("checked", false);
+                        flag = false;
+                        return;
                     }
-                }]
-            };
-            chart_all.setOption(option);
-        }
-        else {
-             $("#id_chart_all").css('display', 'none');
+                });
+            }
+        });
+
+        $("#id_node_table").on("click", "tr", function () {//给tr或者td添加click事件
+            var data = table.row(this).data();//获取值的对象数据
+        });
+
+
+        function Check() {
+            to_clean = [];
+            var Check = $("table input[name='ckb-jobid']:checked");//在table中找input下类型为checkbox属性为选中状态的数据
+            Check.each(function () {//遍历
+                var row = $(this).parent().parent().parent();//获取选中行
+                var data = row.find("td:first").text();
+                to_clean.push(data)
+            })
+            return to_clean;
         }
 
+        function mergeNode() {
+            Check();
+        }
+
+        function discardNode() {
+            to_clean = Check();
+            $.ajax({
+                url: '{% url 'CleanData' %}',
+                data: {
+                    'type': 'discard',
+                    'to_clean': to_clean
+                },
+                type: 'post',
+                dataType: 'json',
+                traditional: true,
+                success: function (data) {
+                    alert('DISCARD OK!');
+                }
+
+            })
+        }
 
     </script>
 {% endblock %}
