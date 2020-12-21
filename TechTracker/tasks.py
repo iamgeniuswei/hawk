@@ -23,10 +23,10 @@ def parse_files_db(params:str):
         params = json.loads(s=params)
         parser = None
         if params['f_source'] == 'WoS':
-            parser = WoSParser('WoS', params['f_path'])
+            parser = WoSArticleParser('WoS', params['f_path'])
         elif params['f_source'] == 'CNKI':
             parser = CNKIParser('CNKI', params['f_path'])
-        parser.parse_files_to_articles()
+        parser.parse_articles_to_db()
         return True
     except Exception as e:
         print(str(e))

@@ -5,6 +5,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseServerError, JsonResponse
 # Create your views here.
 from .forms import *
+
 from .core.file_to_article_parser import *
 from django.db.models import Count, Max
 import pandas as pd
@@ -32,7 +33,7 @@ def analyze(request):
 
         file = "F:/Project/hawk/data"
         parser = CNKIParser('CNKI', file)
-        parser.parse_files_to_articles()
+        parser.parse_articles_to_db()
         print('All is Done')
     except Exception as e:
         print(str(e))

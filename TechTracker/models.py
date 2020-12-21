@@ -80,7 +80,8 @@ class TWoSArticle(models.Model):
     f_memo = models.TextField(null=True, blank=True, verbose_name='其他信息')
     f_domain = models.ManyToManyField(to=TTechDomain, related_name='wosarticle_domain', verbose_name='技术领域')
     f_keywords = models.ManyToManyField('tkeyword', related_name='wosarticle_keywords', verbose_name='关键字')
-
+    f_authors = models.ManyToManyField('twosauthor', related_name='wosarticle_authors', through='tauthororder', through_fields=('f_article', 'f_author'))
+    f_institutes = models.ManyToManyField('twosinstitute', related_name='wosarticle_institutes', through='tinstituteorder', through_fields=('f_article', 'f_institute'))
     class Meta:
         unique_together = ("f_af", "f_ti")
 
@@ -93,11 +94,11 @@ class TWoSInstitute(models.Model):
     f_chinese = models.CharField(max_length=128, null=True, blank=True, verbose_name='中文名')
     f_fullname = models.CharField(max_length=128, null=True, blank=True, verbose_name='机构全名')
     f_country = models.CharField(max_length=128, null=True, blank=True, verbose_name='机构国别')
-    f_articles = models.ManyToManyField('twosarticle', related_name='institute_articles', verbose_name='机构产出')
+    f_articles = models.ManyToManyField('twosarticle', through='TInstituteOrder', related_name='institute_articles', verbose_name='机构产出')
     f_memo = models.TextField(null=True, blank=True, verbose_name='备注')
 
     def __str__(self):
-        return self.f_fullname
+        return self.f_name
 
 
 class TWoSAuthor(models.Model):
@@ -113,6 +114,12 @@ class TWoSAuthor(models.Model):
 class TAuthorOrder(models.Model):
     f_author = models.ForeignKey(TWoSAuthor, related_name='authororder', on_delete=models.DO_NOTHING)
     f_article = models.ForeignKey(TWoSArticle, related_name='authororder', on_delete=models.DO_NOTHING)
+    f_order = models.PositiveIntegerField(default=1)
+
+
+class TInstituteOrder(models.Model):
+    f_institute = models.ForeignKey(TWoSInstitute, related_name='instituteorder', on_delete=models.DO_NOTHING)
+    f_article = models.ForeignKey(TWoSArticle, related_name='instituteorder', on_delete=models.DO_NOTHING)
     f_order = models.PositiveIntegerField(default=1)
 
 
@@ -208,7 +215,7 @@ class TCoAnalysisParams(models.Model):
     f_end = models.PositiveIntegerField(default=2020, null=True, blank=True,verbose_name='终止年度')
     f_domain = models.ManyToManyField(to=TTechDomain, null=True, blank=True, related_name='co_domain',
                                       verbose_name='技术领域')
-    f_source = models.ForeignKey(to=TDataSource, verbose_name='数据源', on_delete=models.DO_NOTHING)
+    f_source = models.ManyToManyField(to=TDataSource, related_name='co_source', verbose_name='文献类型')
     f_slice = models.PositiveIntegerField(default=1, null=True, blank=True, verbose_name='年份切片')
     f_object = models.PositiveIntegerField(choices=ANALYSIS_OBJECT, default=1, verbose_name='分析对象')
     f_threshold_type = models.PositiveIntegerField(choices=ANALYSIS_THRESHOLD_TYPE, default=1, verbose_name='阈值类型')

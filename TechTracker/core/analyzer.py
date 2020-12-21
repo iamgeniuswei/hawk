@@ -266,8 +266,8 @@ class TopAnalyzer(Analyzer):
         authors_dict = {}
         for article in articles:
             try:
-                list_authors= article.f_af.split(';')
-                first_author = list_authors[0].strip()
+                obj_author = TAuthorOrder.objects.get(f_article=article, f_order=1).f_author
+                first_author = obj_author.f_name
                 if first_author not in authors_dict:
                     authors_dict[first_author] = 1
                 else:
@@ -281,13 +281,13 @@ class TopAnalyzer(Analyzer):
         authors_dict = {}
         for article in articles:
             try:
-                list_authors = article.f_af.split(';')
-                for author in list_authors:
-                    author = author.strip()
-                    if author not in authors_dict:
-                        authors_dict[author] = 1
+                qs_author = article.f_authors.all()
+                for author in qs_author:
+                    str_author = author.f_name
+                    if str_author not in authors_dict:
+                        authors_dict[str_author] = 1
                     else:
-                        authors_dict[author] += 1
+                        authors_dict[str_author] += 1
             except Exception as e:
                 error = "文献{0} 分析错误，错误原因：{1}".format(article.f_ti, str(e))
                 print(error)
@@ -313,13 +313,13 @@ class TopAnalyzer(Analyzer):
         institutes_dict = {}
         for article in articles:
             try:
-                list_institutes = article.f_c1.split(';')
+                list_institutes = article.f_institutes.all()
                 for institute in list_institutes:
-                    institute = (institute.split(',')[0]).strip()
-                    if institute not in institutes_dict:
-                        institutes_dict[institute] = 1
+                    str_institute = institute.f_name
+                    if str_institute not in institutes_dict:
+                        institutes_dict[str_institute] = 1
                     else:
-                        institutes_dict[institute] += 1
+                        institutes_dict[str_institute] += 1
             except Exception as e:
                 error = "文献{0} 分析错误，错误原因：{1}".format(article.f_ti, str(e))
                 print(error)
